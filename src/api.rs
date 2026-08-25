@@ -18,6 +18,7 @@ pub struct CurrentWeather {
     pub precipitation: f64,
     pub surface_pressure: f64,
     pub weather_code: i32,
+    #[allow(dead_code)]
     pub is_day: i32,
 }
 
@@ -28,4 +29,3 @@ pub async fn fetch_weather(lat: f64, lon: f64) -> Result<WeatherResponse, reqwes
     );
     reqwest::get(url).await?.json::<WeatherResponse>().await
 }
-

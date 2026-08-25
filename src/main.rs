@@ -24,14 +24,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 app.state = AppState::Idle;
             }
 
-            if event::poll(Duration::from_millis(16))? {
-                if let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('q') {
-                        break;
-                    }
-
-                    handler::handle_key_events(key, &mut app, tx.clone());
+            if event::poll(Duration::from_millis(16))?
+                && let Event::Key(key) = event::read()?
+            {
+                if key.code == KeyCode::Char('q') {
+                    break;
                 }
+
+                handler::handle_key_events(key, &mut app, tx.clone());
             }
         }
         Ok(())

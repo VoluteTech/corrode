@@ -189,7 +189,7 @@ impl App {
     }
 
     pub fn filter_cities(&mut self) {
-        if self.input_text.len() < 1 {
+        if self.input_text.is_empty() {
             self.filtered_cities = vec![];
             self.selection_index = 0;
             return;

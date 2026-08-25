@@ -3,17 +3,17 @@ use crate::{
     braille,
 };
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, HorizontalAlignment, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
-    Frame,
 };
 
 fn get_weather_description(code: i32) -> &'static str {
     match code {
         0 => "Clear sky",
-        1 | 2 | 3 => "Partly cloudy",
+        1..=3 => "Partly cloudy",
         45 | 48 => "Foggy",
         51 | 53 | 55 => "Drizzle",
         56 | 57 => "Freezing drizzle",
@@ -21,7 +21,7 @@ fn get_weather_description(code: i32) -> &'static str {
         66 | 67 => "Freezing rain",
         71 | 73 | 75 => "Snow",
         77 => "Snow grains",
-        80 | 81 | 82 => "Rain showers",
+        80..=82 => "Rain showers",
         85 | 86 => "Snow showers",
         95 => "Thunderstorm",
         96 | 99 => "Thunderstorm with hail",
@@ -35,7 +35,7 @@ pub fn render(f: &mut Frame, app: &mut App) {
         .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(f.area());
 
-    let show_cities = app.input_text.len() >= 1;
+    let show_cities = !app.input_text.is_empty();
     let city_count = if show_cities {
         app.filtered_cities.len()
     } else {

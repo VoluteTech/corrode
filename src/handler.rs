@@ -1,12 +1,25 @@
-use crossterm::event::{KeyEvent, KeyCode, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tokio::sync::mpsc;
 
-use crate::{api, app::{App, AppState}};
+use crate::{
+    api,
+    app::{App, AppState},
+};
 
-pub fn handle_key_events(key_event: KeyEvent, app: &mut App, tx: mpsc::Sender<api::WeatherResponse>) {
+pub fn handle_key_events(
+    key_event: KeyEvent,
+    app: &mut App,
+    tx: mpsc::Sender<api::WeatherResponse>,
+) {
     let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
-    
+
     match key_event.code {
+        KeyCode::Down => {
+            app.next();
+        }
+        KeyCode::Up => {
+            app.previous();
+        }
         KeyCode::Char('j') if ctrl => {
             app.next();
         }
@@ -27,12 +40,15 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App, tx: mpsc::Sender<ap
             }
         }
         KeyCode::Enter => {
-            if app.input_text.is_empty() {
-                app.state = AppState::Error("Please select a city".into());
-                return;
-            }
-            
-            if let Some(city) = app.find_city_by_name(&app.input_text) {
+            let city = app
+                .get_selected_city()
+                .cloned()
+                .or_else(|| app.find_city_by_name(&app.input_text));
+
+            if let Some(city) = city {
+                app.input_text = city.name;
+                app.filtered_cities.clear();
+                app.selection_index = 0;
                 app.state = AppState::Loading;
 
                 let tx_clone = tx.clone();
@@ -60,6 +76,6 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App, tx: mpsc::Sender<ap
             app.filtered_cities.clear();
             app.selection_index = 0;
         }
-        _ => {},
+        _ => {}
     }
 }

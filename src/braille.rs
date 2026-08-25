@@ -1,4 +1,4 @@
-use ratatui::{layout::Rect, style::Color, symbols::Marker, widgets::canvas::Canvas, Frame};
+use ratatui::{Frame, layout::Rect, style::Color, symbols::Marker, widgets::canvas::Canvas};
 
 pub fn draw_house(frame: &mut Frame, area: Rect) {
     let canvas = Canvas::default()
