@@ -5,7 +5,7 @@ mod handler;
 mod ui;
 
 use crate::app::{App, AppState};
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use std::{error::Error, time::Duration};
 use tokio::sync::mpsc;
 
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             if event::poll(Duration::from_millis(16))?
                 && let Event::Key(key) = event::read()?
             {
-                if key.code == KeyCode::Char('q') {
+                if key.code == KeyCode::Char('d') && key.modifiers.contains(KeyModifiers::CONTROL) {
                     break;
                 }
 
