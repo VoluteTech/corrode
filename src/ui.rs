@@ -4,7 +4,7 @@ use crate::{
 };
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, HorizontalAlignment, Layout, Rect},
+    layout::{Constraint, Direction, HorizontalAlignment, Layout},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
@@ -126,12 +126,11 @@ pub fn render(f: &mut Frame, app: &mut App) {
 
     let right_inner = right_block.inner(chunks[1]);
     f.render_widget(right_block, chunks[1]);
-    braille::draw_house(f, right_inner);
-
-    let sun_w: u16 = 20;
-    let sun_h: u16 = 12;
-    let sun_x = right_inner.x + right_inner.width - sun_w - 2;
-    let sun_y = right_inner.y + 1;
-    let sun_area = Rect::new(sun_x, sun_y, sun_w, sun_h);
-    braille::draw_sun(f, sun_area, app.frame);
+    if let Some(weather) = &app.weather {
+        let template = braille::WeatherTemplate::from_weather(
+            weather.current.weather_code,
+            weather.current.wind_speed_10m,
+        );
+        braille::draw_weather(f, right_inner, template, app.frame);
+    }
 }

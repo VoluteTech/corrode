@@ -1,214 +1,216 @@
 use ratatui::{Frame, layout::Rect, style::Color, symbols::Marker, widgets::canvas::Canvas};
 
-pub fn draw_house(frame: &mut Frame, area: Rect) {
-    let canvas = Canvas::default()
-        .marker(Marker::Braille)
-        .x_bounds([0.0, f64::from(area.width)])
-        .y_bounds([0.0, f64::from(area.height)])
-        .paint(move |ctx| {
-            let width = f64::from(area.width);
-            let height = f64::from(area.height);
-
-            let house_left = width * 0.2;
-            let house_right = width * 0.5;
-            let house_bottom = height * 0.1;
-            let house_top = height * 0.4;
-            let roof_top = height * 0.6;
-
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_left,
-                y1: house_bottom,
-                x2: house_right,
-                y2: house_bottom,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_left,
-                y1: house_bottom,
-                x2: house_left,
-                y2: house_top,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_right,
-                y1: house_bottom,
-                x2: house_right,
-                y2: house_top,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_left,
-                y1: house_top,
-                x2: house_right,
-                y2: house_top,
-                color: Color::White,
-            });
-
-            let center_x = (house_left + house_right) / 2.0;
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_left,
-                y1: house_top,
-                x2: center_x,
-                y2: roof_top,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: house_right,
-                y1: house_top,
-                x2: center_x,
-                y2: roof_top,
-                color: Color::White,
-            });
-
-            let door_left = center_x - width * 0.04;
-            let door_right = center_x + width * 0.04;
-            let door_top = house_bottom + height * 0.14;
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: door_left,
-                y1: house_bottom,
-                x2: door_left,
-                y2: door_top,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: door_right,
-                y1: house_bottom,
-                x2: door_right,
-                y2: door_top,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: door_left,
-                y1: door_top,
-                x2: door_right,
-                y2: door_top,
-                color: Color::White,
-            });
-
-            let window_width = width * 0.06;
-            let window_height = height * 0.06;
-            let window_spacing = width * 0.04;
-            let window_y = house_bottom + height * 0.2;
-
-            let window1_left = center_x - window_width - window_spacing / 2.0;
-            let window1_right = center_x - window_spacing / 2.0;
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window1_left,
-                y1: window_y,
-                x2: window1_right,
-                y2: window_y,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window1_left,
-                y1: window_y,
-                x2: window1_left,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window1_right,
-                y1: window_y,
-                x2: window1_right,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window1_left,
-                y1: window_y + window_height,
-                x2: window1_right,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-
-            let window2_left = center_x + window_spacing / 2.0;
-            let window2_right = center_x + window_width + window_spacing / 2.0;
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window2_left,
-                y1: window_y,
-                x2: window2_right,
-                y2: window_y,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window2_left,
-                y1: window_y,
-                x2: window2_left,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window2_right,
-                y1: window_y,
-                x2: window2_right,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-            ctx.draw(&ratatui::widgets::canvas::Line {
-                x1: window2_left,
-                y1: window_y + window_height,
-                x2: window2_right,
-                y2: window_y + window_height,
-                color: Color::White,
-            });
-        });
-
-    frame.render_widget(canvas, area);
+#[derive(Clone, Copy)]
+pub struct WeatherTemplate {
+    sunny: bool,
+    cloudy: bool,
+    rainy: bool,
+    snowy: bool,
+    foggy: bool,
+    windy: bool,
 }
 
-pub fn draw_sun(frame: &mut Frame, area: Rect, tick: u64) {
+impl WeatherTemplate {
+    pub fn from_weather(code: i32, wind_speed: f64) -> Self {
+        Self {
+            sunny: matches!(code, 0..=2),
+            cloudy: matches!(
+                code,
+                1..=3 | 45 | 48 | 51..=57 | 61..=67 | 71..=77 | 80..=86 | 95..=99
+            ),
+            rainy: matches!(code, 51..=67 | 80..=82 | 95..=99),
+            snowy: matches!(code, 71..=77 | 85 | 86),
+            foggy: matches!(code, 45 | 48),
+            windy: wind_speed >= 25.0,
+        }
+    }
+}
+
+fn filled_circle(cx: f64, cy: f64, radius: f64) -> Vec<(f64, f64)> {
+    let mut points = Vec::new();
+    for x in -20..=20 {
+        for y in -20..=20 {
+            let px = f64::from(x) / 20.0 * radius;
+            let py = f64::from(y) / 20.0 * radius;
+            if px * px + py * py <= radius * radius {
+                points.push((cx + px, cy + py));
+            }
+        }
+    }
+    points
+}
+
+fn cloud_points() -> Vec<(f64, f64)> {
+    // Half-unit sampling avoids the striped pattern produced when points line up
+    // with the terminal's Braille cell grid.
+    let lobes = [
+        (52.0, 67.0, 10.0, 7.0),
+        (63.0, 72.0, 13.0, 11.0),
+        (75.0, 67.0, 11.0, 8.0),
+    ];
+    let mut points = Vec::new();
+    for x in 80..=174 {
+        for y in 116..=160 {
+            let px = f64::from(x) / 2.0;
+            let py = f64::from(y) / 2.0;
+            if lobes.iter().any(|(cx, cy, rx, ry)| {
+                let dx = (px - cx) / rx;
+                let dy = (py - cy) / ry;
+                dx * dx + dy * dy <= 1.0
+            }) {
+                points.push((px, py));
+            }
+        }
+    }
+    points
+}
+
+pub fn draw_weather(frame: &mut Frame, area: Rect, weather: WeatherTemplate, tick: u64) {
     let canvas = Canvas::default()
         .marker(Marker::Braille)
-        .x_bounds([0.0, f64::from(area.width)])
-        .y_bounds([0.0, f64::from(area.height)])
+        .x_bounds([0.0, 100.0])
+        .y_bounds([0.0, 100.0])
         .paint(move |ctx| {
-            let w = f64::from(area.width);
-            let h = f64::from(area.height);
-            let r = h.min(w) / 4.0;
-            let padding = 2.0;
-            let aspect = w / h;
-            let cx = w - r * aspect - padding;
-            let cy = r + padding;
+            use ratatui::widgets::canvas::{Line, Points};
 
-            let rotation = (tick as f64) * 0.05;
-
-            for i in 0..8 {
-                let angle = (i as f64 / 8.0) * std::f64::consts::TAU + rotation;
-                ctx.draw(&ratatui::widgets::canvas::Line {
-                    x1: cx + angle.cos() * r * aspect,
-                    y1: cy + angle.sin() * r,
-                    x2: cx + angle.cos() * (r * 1.8) * aspect,
-                    y2: cy + angle.sin() * (r * 1.8),
-                    color: Color::LightYellow,
+            // Ground and a more detailed foreground give every composition a stable scene.
+            ctx.draw(&Line {
+                x1: 3.0,
+                y1: 8.0,
+                x2: 97.0,
+                y2: 8.0,
+                color: Color::DarkGray,
+            });
+            for (x1, y1, x2, y2, color) in [
+                (9.0, 8.0, 9.0, 38.0, Color::White),
+                (9.0, 38.0, 27.0, 58.0, Color::White),
+                (27.0, 58.0, 48.0, 38.0, Color::White),
+                (48.0, 38.0, 48.0, 8.0, Color::White),
+                (9.0, 8.0, 48.0, 8.0, Color::White),
+                (14.0, 34.0, 27.0, 49.0, Color::DarkGray),
+                (27.0, 49.0, 43.0, 34.0, Color::DarkGray),
+                (32.0, 8.0, 32.0, 27.0, Color::Yellow),
+                (42.0, 8.0, 42.0, 27.0, Color::Yellow),
+                (32.0, 27.0, 42.0, 27.0, Color::Yellow),
+                (15.0, 22.0, 25.0, 22.0, Color::LightBlue),
+                (15.0, 32.0, 25.0, 32.0, Color::LightBlue),
+                (15.0, 22.0, 15.0, 32.0, Color::LightBlue),
+                (25.0, 22.0, 25.0, 32.0, Color::LightBlue),
+                (20.0, 22.0, 20.0, 32.0, Color::DarkGray),
+                (15.0, 27.0, 25.0, 27.0, Color::DarkGray),
+            ] {
+                ctx.draw(&Line {
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    color,
                 });
             }
 
-            let points: Vec<(f64, f64)> = (0..64)
-                .map(|i| {
-                    let angle = (i as f64 / 64.0) * std::f64::consts::TAU;
-                    (cx + angle.cos() * r * aspect, cy + angle.sin() * r)
-                })
-                .collect();
+            if weather.sunny {
+                // In mixed weather the sun sits behind the cloud's upper-right
+                // edge, rather than occupying the same space as the cloud.
+                let (cx, cy) = if weather.cloudy {
+                    (86.0, 84.0)
+                } else {
+                    (75.0, 75.0)
+                };
+                let rotation = tick as f64 * 0.025;
+                for ray in 0..12 {
+                    let angle = f64::from(ray) * std::f64::consts::TAU / 12.0 + rotation;
+                    ctx.draw(&Line {
+                        x1: cx + angle.cos() * 11.0,
+                        y1: cy + angle.sin() * 11.0,
+                        x2: cx + angle.cos() * 17.0,
+                        y2: cy + angle.sin() * 17.0,
+                        color: Color::LightYellow,
+                    });
+                }
+                let sun = filled_circle(cx, cy, 8.0);
+                ctx.draw(&Points {
+                    coords: &sun,
+                    color: Color::Yellow,
+                });
+            }
 
-            ctx.draw(&ratatui::widgets::canvas::Points {
-                coords: &points,
-                color: Color::Yellow,
-            });
+            if weather.cloudy {
+                let cloud = cloud_points();
+                ctx.draw(&Points {
+                    coords: &cloud,
+                    color: Color::Gray,
+                });
+            }
 
-            let inner_points: Vec<(f64, f64)> = (0..32)
-                .map(|i| {
-                    let angle = (i as f64 / 32.0) * std::f64::consts::TAU;
-                    (
-                        cx + angle.cos() * r * 0.5 * aspect,
-                        cy + angle.sin() * r * 0.5,
-                    )
-                })
-                .collect();
+            let phase = (tick % 12) as f64;
+            if weather.rainy {
+                for x in (47..94).step_by(7) {
+                    let offset = (f64::from(x) + phase) % 12.0;
+                    ctx.draw(&Line {
+                        x1: f64::from(x),
+                        y1: 58.0 - offset,
+                        x2: f64::from(x) - 3.0,
+                        y2: 50.0 - offset,
+                        color: Color::LightBlue,
+                    });
+                    ctx.draw(&Line {
+                        x1: f64::from(x),
+                        y1: 42.0 - offset,
+                        x2: f64::from(x) - 3.0,
+                        y2: 34.0 - offset,
+                        color: Color::Blue,
+                    });
+                }
+            }
 
-            ctx.draw(&ratatui::widgets::canvas::Points {
-                coords: &inner_points,
-                color: Color::LightYellow,
-            });
+            if weather.snowy {
+                let mut snow = Vec::new();
+                for x in (46..95).step_by(7) {
+                    for row in 0..3 {
+                        let drift = ((tick + x as u64 + row * 5) % 9) as f64;
+                        snow.push((
+                            f64::from(x) + drift / 3.0,
+                            57.0 - f64::from(row as u32) * 12.0 - drift,
+                        ));
+                    }
+                }
+                ctx.draw(&Points {
+                    coords: &snow,
+                    color: Color::White,
+                });
+            }
+
+            if weather.foggy {
+                for row in 0..5 {
+                    let y = 58.0 - f64::from(row) * 8.0;
+                    let fog: Vec<_> = (0..90)
+                        .map(|x| {
+                            let px = 8.0 + f64::from(x);
+                            (px, y + (px / 8.0 + f64::from(row)).sin() * 1.5)
+                        })
+                        .collect();
+                    ctx.draw(&Points {
+                        coords: &fog,
+                        color: Color::DarkGray,
+                    });
+                }
+            }
+
+            if weather.windy {
+                for row in 0..3 {
+                    let y = 31.0 - f64::from(row) * 8.0;
+                    let wind: Vec<_> = (0..48)
+                        .map(|x| {
+                            let px = 50.0 + f64::from(x);
+                            (px, y + (px / 7.0 + phase / 4.0).sin() * 2.0)
+                        })
+                        .collect();
+                    ctx.draw(&Points {
+                        coords: &wind,
+                        color: Color::Cyan,
+                    });
+                }
+            }
         });
 
     frame.render_widget(canvas, area);
